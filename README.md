@@ -15,6 +15,7 @@ Cette infrastructure permet notamment de :
 - sécuriser les services exposés
 
 L’infrastructure intègre plusieurs composants essentiels d’un environnement moderne :
+
 Applications
 
 - **Reverse Proxy Nginx** : point d’entrée unique pour les services web.
