@@ -2,17 +2,53 @@
 
 ## Présentation du projet
 
-Ce projet a pour objectif de déployer une infrastructure DevOps complète conteneurisée avec Docker.  
-L’infrastructure simule un environnement de production avec :
+Ce projet a pour objectif de déployer une infrastructure DevOps complète conteneurisée avec Docker afin de simuler un environnement de production réaliste.
 
-- Une application web (Frontend)
-- Une API Backend
-- Une base de données PostgreSQL
-- Un cache Redis
-- Une supervision complète avec Zabbix
-- Un reverse proxy Nginx permettant un point d’entrée unique
+L’ensemble des services est orchestré avec Docker Compose et s’appuie sur un reverse proxy Nginx permettant de centraliser les accès aux différentes applications.
 
-L’ensemble des services est orchestré via Docker Compose.
+L’infrastructure intègre plusieurs composants essentiels d’un environnement moderne :
+
+Applications
+
+Frontend / Reverse Proxy Nginx : point d’entrée unique pour les services web.
+
+Backend API : service applicatif principal exposant les fonctionnalités métier.
+
+Vaultwarden : gestionnaire de mots de passe auto-hébergé.
+
+Metabase : outil de visualisation et d’analyse de données.
+
+Bases de données et cache
+
+PostgreSQL : base de données principale pour l’application.
+
+PostgreSQL (Zabbix) : base de données dédiée à la supervision.
+
+Redis : système de cache pour améliorer les performances des applications.
+
+Supervision et observabilité
+
+Zabbix Server : collecte et analyse des métriques de l’infrastructure.
+
+Zabbix Web : interface web de supervision.
+
+Zabbix Agent : agent installé sur l’hôte pour remonter les métriques système.
+
+cAdvisor : monitoring des conteneurs Docker (CPU, mémoire, réseau).
+
+Dozzle : visualisation en temps réel des logs Docker.
+
+Sécurité
+
+CrowdSec : moteur de détection d’attaques basé sur l’analyse des logs.
+
+CrowdSec Bouncer : blocage automatique des IP malveillantes au niveau du reverse proxy.
+
+Administration et gestion
+
+Portainer : interface web de gestion des conteneurs Docker.
+
+ttyd : terminal web permettant l’accès à un shell depuis le navigateur.
 
 
 ## Architecture
