@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infra DevOps - Prod Dashboard</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    .glow-text { text-shadow: 0 0 10px rgba(56, 189, 248, 0.7), 0 0 20px rgba(56, 189, 248, 0.5); }
+    .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.9); }
+    ::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 10px; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-200 min-h-screen flex flex-col items-center py-12 font-sans overflow-x-hidden selection:bg-sky-500 selection:text-white">
+
+  <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-40 hidden opacity-0 transition-opacity duration-300" onclick="toggleSidebar()"></div>
+
+  <div id="services-sidebar" class="fixed top-0 right-0 h-full w-80 bg-slate-800 border-l border-slate-600 z-50 transform translate-x-full transition-transform duration-300 shadow-[-10px_0_30px_rgba(0,0,0,0.5)] flex flex-col">
+    <div class="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-900">
+      <h3 class="text-xl font-bold text-purple-400"><i class="fa-solid fa-microchip mr-2"></i> Daemons VM</h3>
+      <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white transition-colors text-2xl cursor-pointer">&times;</button>
+    </div>
+    <div class="p-4 bg-slate-800/50 text-xs text-slate-400 text-center border-b border-slate-700">
+      Mise à jour en temps réel via le pont Docker
+    </div>
+    <div id="sidebar-content" class="p-6 overflow-y-auto flex-1 space-y-3">
+      <div class="text-center text-slate-500 mt-10"><i class="fa-solid fa-spinner fa-spin text-2xl"></i><br>En attente du scan...</div>
+    </div>
+  </div>
+
+  <header class="text-center mb-10">
+    <div class="inline-block p-4 rounded-full bg-sky-500/10 mb-4 ring-1 ring-sky-500/50">
+      <i class="fa-solid fa-server text-4xl text-sky-400"></i>
+    </div>
+    <h1 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-500 glow-text mb-2">
+      Infra DevOps Dashboard
+    </h1>
+    <p class="text-slate-400 text-lg uppercase tracking-widest font-semibold">Environnement de Production</p>
+  </header>
+
+  <div class="mb-10 w-full max-w-7xl px-4 flex justify-center">
+    <button onclick="runAllDiagnostics()" class="group relative px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg shadow-[0_0_15px_rgba(79,70,229,0.5)] transition-all duration-300 transform hover:-translate-y-1 cursor-pointer">
+      <span class="relative z-10"><i class="fa-solid fa-radar relative mr-2 animate-pulse"></i> Lancer tous les diagnostics</span>
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 w-full max-w-7xl px-4 mb-10">
+
+    <div class="glass-card rounded-2xl p-6 flex flex-col items-center text-center transition-transform hover:scale-105 border-t-4 border-t-emerald-500">
+      <div class="text-emerald-400 text-4xl mb-4"><i class="fa-brands fa-node-js"></i></div>
+      <h2 class="text-2xl font-bold text-white mb-2">Backend API</h2>
+      <p class="text-slate-400 text-sm mb-6 flex-grow">Disponibilité du serveur Node.js</p>
+      <div id="api-status-badge" class="flex items-center space-x-2 bg-slate-800 rounded-full px-4 py-2 mb-4 w-full justify-center"><span class="w-3 h-3 rounded-full bg-slate-500"></span><span class="text-sm font-medium">En attente</span></div>
+      <button onclick="checkHealth()" class="w-full py-2 bg-slate-700 hover:bg-slate-600 rounded text-emerald-400 font-semibold transition-colors cursor-pointer"><i class="fa-solid fa-bolt mr-2"></i> Tester l'API</button>
+      <div id="api-result" class="mt-4 text-xs font-mono text-slate-500 min-h-[1.5rem]"></div>
+    </div>
+
+    <div class="glass-card rounded-2xl p-6 flex flex-col items-center text-center transition-transform hover:scale-105 border-t-4 border-t-blue-500">
+      <div class="text-blue-400 text-4xl mb-4"><i class="fa-solid fa-database"></i></div>
+      <h2 class="text-2xl font-bold text-white mb-2">PostgreSQL</h2>
+      <p class="text-slate-400 text-sm mb-6 flex-grow">Liaison API > Base de Données</p>
+      <div id="db-status-badge" class="flex items-center space-x-2 bg-slate-800 rounded-full px-4 py-2 mb-4 w-full justify-center"><span class="w-3 h-3 rounded-full bg-slate-500"></span><span class="text-sm font-medium">En attente</span></div>
+      <button onclick="checkDatabase()" class="w-full py-2 bg-slate-700 hover:bg-slate-600 rounded text-blue-400 font-semibold transition-colors cursor-pointer"><i class="fa-solid fa-plug mr-2"></i> Tester la BDD</button>
+      <div id="db-result" class="mt-4 text-xs font-mono text-slate-500 min-h-[1.5rem]"></div>
+    </div>
+
+    <div class="glass-card rounded-2xl p-6 flex flex-col items-center text-center transition-transform hover:scale-105 border-t-4 border-t-orange-500">
+      <div class="text-orange-500 text-4xl mb-4"><i class="fa-solid fa-memory"></i></div>
+      <h2 class="text-2xl font-bold text-white mb-2">Redis Cache</h2>
+      <p class="text-slate-400 text-sm mb-6 flex-grow">Liaison API > Cache en mémoire</p>
+      <div id="redis-status-badge" class="flex items-center space-x-2 bg-slate-800 rounded-full px-4 py-2 mb-4 w-full justify-center"><span class="w-3 h-3 rounded-full bg-slate-500"></span><span class="text-sm font-medium">En attente</span></div>
+      <button onclick="checkRedis()" class="w-full py-2 bg-slate-700 hover:bg-slate-600 rounded text-orange-400 font-semibold transition-colors cursor-pointer"><i class="fa-solid fa-bolt mr-2"></i> Tester Redis</button>
+      <div id="redis-result" class="mt-4 text-xs font-mono text-slate-500 min-h-[1.5rem]"></div>
+    </div>
+
+    <div class="glass-card rounded-2xl p-6 flex flex-col items-center text-center transition-transform hover:scale-105 border-t-4 border-t-purple-500">
+      <div class="text-purple-400 text-4xl mb-4"><i class="fa-brands fa-linux"></i></div>
+      <h2 class="text-2xl font-bold text-white mb-2">Daemons Debian</h2>
+      <p class="text-slate-400 text-sm mb-6 flex-grow">Monitoring de l'OS via pont Docker.</p>
+      <div id="services-summary" class="flex items-center space-x-2 bg-slate-800 rounded-full px-4 py-2 mb-4 w-full justify-center border border-slate-700">
+        <span class="text-sm font-medium text-slate-400">Non scanné</span>
+      </div>
+      <div class="flex space-x-2 w-full">
+        <button onclick="checkServices()" class="flex-1 py-2 bg-slate-700 hover:bg-slate-600 rounded text-purple-400 font-semibold transition-colors cursor-pointer"><i class="fa-solid fa-magnifying-glass"></i> Scan</button>
+        <button onclick="toggleSidebar()" class="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded font-bold transition-all shadow-[0_0_10px_rgba(168,85,247,0.4)] cursor-pointer"><i class="fa-solid fa-bars-staggered"></i> Explorer</button>
+      </div>
+    </div>
+
+    <div class="glass-card rounded-2xl p-6 flex flex-col items-center text-center transition-transform hover:scale-105 border-t-4 border-t-red-500">
+      <div class="text-red-500 text-4xl mb-4"><i class="fa-solid fa-chart-line"></i></div>
+      <h2 class="text-2xl font-bold text-white mb-2">Zabbix</h2>
+      <p class="text-slate-400 text-sm mb-6 flex-grow">Administration et alertes globales.</p>
+      <div class="flex items-center space-x-2 bg-emerald-900/30 rounded-full px-4 py-2 mb-4 w-full justify-center text-emerald-400 border border-emerald-800"><span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span><span class="text-sm font-medium">Interface Web</span></div>
+      <button onclick="goToZabbix()" class="w-full py-2 bg-red-600 hover:bg-red-500 text-white rounded font-bold shadow-[0_0_10px_rgba(239,68,68,0.4)] transition-all cursor-pointer"><i class="fa-solid fa-arrow-up-right-from-square mr-2"></i> Ouvrir Zabbix</button>
+    </div>
+
+    <div class="glass-card rounded-2xl p-6 flex flex-col items-center text-center transition-transform hover:scale-105 border-t-4 border-t-rose-600">
+      <div class="text-rose-400 text-4xl mb-4"><i class="fa-solid fa-shield-halved"></i></div>
+      <h2 class="text-2xl font-bold text-white mb-2">CrowdSec</h2>
+      <p class="text-slate-400 text-sm mb-6 flex-grow">Protection anti-intrusion collaborative.</p>
+      <div class="flex items-center space-x-2 bg-emerald-900/30 rounded-full px-4 py-2 mb-4 w-full justify-center text-emerald-400 border border-emerald-800"><span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span><span class="text-sm font-medium">Protection Active</span></div>
+      <button onclick="goToMetabase()" class="w-full py-2 bg-rose-700 hover:bg-rose-600 text-white rounded font-bold shadow-[0_0_10px_rgba(225,29,72,0.4)] transition-all cursor-pointer"><i class="fa-solid fa-chart-bar mr-2"></i> Ouvrir Dashboard</button>
+    </div>
+
+    <div class="glass-card rounded-2xl p-6 flex flex-col items-center text-center transition-transform hover:scale-105 border-t-4 border-t-amber-500">
+      <div class="text-amber-400 text-4xl mb-4"><i class="fa-solid fa-terminal"></i></div>
+      <h2 class="text-2xl font-bold text-white mb-2">Dozzle Logs</h2>
+      <p class="text-slate-400 text-sm mb-6 flex-grow">Visualisation en direct des logs Docker.</p>
+      <div class="flex items-center space-x-2 bg-emerald-900/30 rounded-full px-4 py-2 mb-4 w-full justify-center text-emerald-400 border border-emerald-800"><span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span><span class="text-sm font-medium">Capture Active</span></div>
+      <button onclick="goToDozzle()" class="w-full py-2 bg-amber-600 hover:bg-amber-500 text-white rounded font-bold shadow-[0_0_10px_rgba(245,158,11,0.4)] transition-all cursor-pointer"><i class="fa-solid fa-scroll mr-2"></i> Voir les Logs</button>
+    </div>
+
+    <div class="glass-card rounded-2xl p-6 flex flex-col items-center text-center transition-transform hover:scale-105 border-t-4 border-t-blue-500">
+      <div class="text-blue-500 text-4xl mb-4"><i class="fa-solid fa-ship"></i></div>
+      <h2 class="text-2xl font-bold text-white mb-2">Portainer</h2>
+      <p class="text-slate-400 text-sm mb-6 flex-grow">Orchestration et gestion des conteneurs.</p>
+      <div class="flex items-center space-x-2 bg-emerald-900/30 rounded-full px-4 py-2 mb-4 w-full justify-center text-emerald-400 border border-emerald-800"><span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span><span class="text-sm font-medium">Contrôle Total</span></div>
+      <button onclick="goToPortainer()" class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded font-bold shadow-[0_0_10px_rgba(37,99,235,0.4)] transition-all cursor-pointer"><i class="fa-solid fa-layer-group mr-2"></i> Ouvrir Portainer</button>
+    </div>
+
+    <div class="glass-card rounded-2xl p-6 flex flex-col items-center text-center transition-transform hover:scale-105 border-t-4 border-t-teal-500">
+      <div class="text-teal-400 text-4xl mb-4"><i class="fa-solid fa-vault"></i></div>
+      <h2 class="text-2xl font-bold text-white mb-2">Vaultwarden</h2>
+      <p class="text-slate-400 text-sm mb-6 flex-grow">Gestionnaire de mots de passe auto-hébergé.</p>
+      <div class="flex items-center space-x-2 bg-emerald-900/30 rounded-full px-4 py-2 mb-4 w-full justify-center text-emerald-400 border border-emerald-800"><span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span><span class="text-sm font-medium">Coffre Sécurisé</span></div>
+      <button onclick="goToVaultwarden()" class="w-full py-2 bg-teal-600 hover:bg-teal-500 text-white rounded font-bold shadow-[0_0_10px_rgba(20,184,166,0.4)] transition-all cursor-pointer"><i class="fa-solid fa-key mr-2"></i> Ouvrir Vaultwarden</button>
+    </div>
+
+    <div class="glass-card rounded-2xl p-6 flex flex-col items-center text-center transition-transform hover:scale-105 border-t-4 border-t-slate-400">
+      <div class="text-slate-300 text-4xl mb-4"><i class="fa-solid fa-display"></i></div>
+      <h2 class="text-2xl font-bold text-white mb-2">Terminal Web</h2>
+      <p class="text-slate-400 text-sm mb-6 flex-grow">Accès shell complet depuis le navigateur via ttyd.</p>
+      <div class="flex items-center space-x-2 bg-emerald-900/30 rounded-full px-4 py-2 mb-4 w-full justify-center text-emerald-400 border border-emerald-800"><span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span><span class="text-sm font-medium">Shell Actif</span></div>
+      <button onclick="goToTerminal()" class="w-full py-2 bg-slate-600 hover:bg-slate-500 text-white rounded font-bold shadow-[0_0_10px_rgba(148,163,184,0.4)] transition-all cursor-pointer"><i class="fa-solid fa-terminal mr-2"></i> Ouvrir le Terminal</button>
+    </div>
+
+  </div>
+
+  <footer class="mt-4 text-slate-500 text-sm text-center pb-8">
+    <div class="flex space-x-6 text-2xl justify-center mb-2">
+      <i class="fa-brands fa-node-js hover:text-emerald-500 transition-colors"></i>
+      <i class="fa-brands fa-docker hover:text-sky-500 transition-colors"></i>
+      <i class="fa-brands fa-linux hover:text-white transition-colors"></i>
+    </div>
+    <p>Architecture DevOps déployée sur Microsoft Azure</p>
+  </footer>
+
+  <script>
+    let sidebarOpen = false;
+    function toggleSidebar() {
+      const sidebar = document.getElementById('services-sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      sidebarOpen = !sidebarOpen;
+      if (sidebarOpen) {
+        sidebar.classList.remove('translate-x-full'); overlay.classList.remove('hidden');
+        setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+        checkServices();
+      } else {
+        sidebar.classList.add('translate-x-full'); overlay.classList.add('opacity-0');
+        setTimeout(() => overlay.classList.add('hidden'), 300);
+      }
+    }
+
+    function setBadge(id, status) {
+      const badge = document.getElementById(id);
+      if (status === 'loading') {
+        badge.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-sky-400"></i> <span class="text-sky-400 text-sm font-medium">Test...</span>`;
+        badge.className = "flex items-center space-x-2 bg-sky-900/30 rounded-full px-4 py-2 mb-4 w-full justify-center border border-sky-800 text-sky-400";
+      } else if (status === 'ok') {
+        badge.innerHTML = `<span class="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></span> <span class="text-emerald-400 text-sm font-bold">ONLINE</span>`;
+        badge.className = "flex items-center space-x-2 bg-emerald-900/30 rounded-full px-4 py-2 mb-4 w-full justify-center border border-emerald-800";
+      } else {
+        badge.innerHTML = `<span class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]"></span> <span class="text-red-400 text-sm font-bold">OFFLINE</span>`;
+        badge.className = "flex items-center space-x-2 bg-red-900/30 rounded-full px-4 py-2 mb-4 w-full justify-center border border-red-800";
+      }
+    }
+
+    async function checkHealth() {
+      setBadge('api-status-badge', 'loading'); document.getElementById('api-result').innerText = "";
+      try {
+        await new Promise(r => setTimeout(r, 600));
+        const response = await fetch('/api/health');
+        if (response.ok) { setBadge('api-status-badge', 'ok'); document.getElementById('api-result').innerText = `Ping OK`; }
+        else throw new Error("Erreur");
+      } catch (e) { setBadge('api-status-badge', 'error'); document.getElementById('api-result').innerText = "Erreur"; }
+    }
+
+    async function checkDatabase() {
+      setBadge('db-status-badge', 'loading'); document.getElementById('db-result').innerText = "";
+      try {
+        await new Promise(r => setTimeout(r, 800));
+        const response = await fetch('/api/db');
+        if (response.ok) { setBadge('db-status-badge', 'ok'); document.getElementById('db-result').innerText = `Connexion établie`; }
+        else throw new Error("Erreur");
+      } catch (e) { setBadge('db-status-badge', 'error'); document.getElementById('db-result').innerText = "Erreur"; }
+    }
+
+    async function checkRedis() {
+      setBadge('redis-status-badge', 'loading'); document.getElementById('redis-result').innerText = "";
+      try {
+        await new Promise(r => setTimeout(r, 700));
+        const response = await fetch('/api/redis');
+        if (response.ok) { setBadge('redis-status-badge', 'ok'); document.getElementById('redis-result').innerText = `Réponse OK`; }
+        else throw new Error("Erreur");
+      } catch (e) { setBadge('redis-status-badge', 'error'); document.getElementById('redis-result').innerText = "Erreur"; }
+    }
+
+    async function checkServices() {
+      const summaryBadge = document.getElementById('services-summary');
+      const sidebarContent = document.getElementById('sidebar-content');
+      summaryBadge.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-sky-400"></i> <span class="text-sky-400 text-sm font-medium">Scan en cours...</span>`;
+
+      try {
+        await new Promise(r => setTimeout(r, 900));
+        const response = await fetch('/api/services');
+        if (response.ok) {
+          const data = await response.json();
+          let htmlResult = ''; let activeCount = 0; let totalCount = 0; let hasAgentActive = false;
+
+          for (const [service, status] of Object.entries(data)) {
+            if (service.includes('zabbix-agent')) {
+              if (status === 'active') hasAgentActive = true;
+              if (status !== 'active') continue;
+            }
+            totalCount++;
+            if (status === 'active') activeCount++;
+
+            const color = status === 'active' ? 'text-emerald-400' : 'text-slate-500';
+            const bgColor = status === 'active' ? 'bg-emerald-900/20' : 'bg-slate-900/50';
+            const borderColor = status === 'active' ? 'border-emerald-800' : 'border-slate-700';
+            const icon = status === 'active' ? 'fa-circle-check' : 'fa-circle-xmark';
+            const statusText = status === 'active' ? 'RUNNING' : 'STOPPED';
+
+            htmlResult += `
+            <div class="flex items-center justify-between p-3 rounded-lg border ${borderColor} ${bgColor}">
+              <div class="flex items-center space-x-3"><i class="fa-solid fa-server text-slate-400"></i><span class="font-mono text-sm font-semibold text-slate-200">${service}</span></div>
+              <span class="${color} text-xs font-bold px-2 py-1 rounded bg-black/30"><i class="fa-solid ${icon}"></i> ${statusText}</span>
+            </div>`;
+          }
+
+          if (!hasAgentActive) {
+            htmlResult += `
+            <div class="flex items-center justify-between p-3 rounded-lg border border-red-800 bg-red-900/20">
+              <div class="flex items-center space-x-3"><i class="fa-solid fa-server text-slate-400"></i><span class="font-mono text-sm font-semibold text-slate-200">zabbix-agent</span></div>
+              <span class="text-red-400 text-xs font-bold px-2 py-1 rounded bg-black/30"><i class="fa-solid fa-circle-xmark"></i> STOPPED</span>
+            </div>`;
+            totalCount++;
+          }
+
+          sidebarContent.innerHTML = htmlResult;
+          summaryBadge.innerHTML = `<span class="w-3 h-3 rounded-full bg-emerald-500"></span><span class="text-emerald-400 text-sm font-bold">Actifs : ${activeCount}/${totalCount}</span>`;
+          summaryBadge.className = "flex items-center space-x-2 bg-emerald-900/30 rounded-full px-4 py-2 mb-4 w-full justify-center border border-emerald-800";
+
+        } else throw new Error("Erreur API");
+      } catch (e) {
+        summaryBadge.innerHTML = `<span class="w-3 h-3 rounded-full bg-red-500"></span><span class="text-red-400 text-sm font-bold">Erreur de lecture</span>`;
+        sidebarContent.innerHTML = `<div class="text-center text-red-500 mt-10"><i class="fa-solid fa-triangle-exclamation text-3xl mb-2"></i><br>Impossible de contacter la VM</div>`;
+      }
+    }
+
+    function runAllDiagnostics() {
+      checkHealth(); checkDatabase(); checkRedis(); checkServices();
+    }
+
+    function goToZabbix() { document.body.style.opacity = '0.5'; setTimeout(() => { window.location.href = "/zabbix/"; }, 200); }
+    function goToDozzle() { document.body.style.opacity = '0.5'; setTimeout(() => { window.location.href = "/logs/"; }, 200); }
+    function goToPortainer() { document.body.style.opacity = '0.5'; setTimeout(() => { window.location.href = "/portainer/"; }, 200); }
+    function goToVaultwarden() { document.body.style.opacity = '0.5'; setTimeout(() => { window.location.href = "/vaultwarden/"; }, 200); }
+    function goToMetabase() { window.open("http://" + window.location.hostname + ":3001", "_blank"); }
+    function goToTerminal() { window.open("/terminal/", "_blank"); }
+  </script>
+</body>
+</html>

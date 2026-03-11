@@ -1,0 +1,262 @@
+version: '3.8'
+
+networks:
+  frontend_net:
+  backend_net:
+  monitoring_net:
+
+volumes:
+  postgres_data:
+  zabbix_db_data:
+  portainer_data:
+  vaultwarden_data:
+  crowdsec_data:
+  crowdsec_db:
+  metabase_data:
+
+services:
+
+  # --------------------
+  # DATABASE APP
+  # --------------------
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend_net
+    restart: always
+
+  # --------------------
+  # REDIS
+  # --------------------
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    networks:
+      - backend_net
+    restart: always
+
+  # --------------------
+  # BACKEND API
+  # --------------------
+  backend:
+    build: ./backend
+    container_name: backend
+    volumes:
+      - ./shared:/app/shared
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - backend_net
+      - frontend_net
+    restart: always
+
+  # --------------------
+  # REVERSE PROXY (NGINX)
+  # --------------------
+  nginx:
+    image: nginx:alpine
+    container_name: reverse-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/.htpasswd:/etc/nginx/.htpasswd:ro
+      - ./nginx/certs/selfsigned.crt:/etc/nginx/certs/selfsigned.crt:ro
+      - ./nginx/certs/selfsigned.key:/etc/nginx/certs/selfsigned.key:ro
+      - /var/log/nginx:/var/log/nginx
+    depends_on:
+      - backend
+    networks:
+      - frontend_net
+      - monitoring_net
+    restart: always
+
+  # --------------------
+  # ZABBIX DATABASE
+  # --------------------
+  zabbix-db:
+    image: postgres:15
+    container_name: zabbix-db
+    environment:
+      POSTGRES_USER: ${ZABBIX_DB_USER}
+      POSTGRES_PASSWORD: ${ZABBIX_DB_PASSWORD}
+      POSTGRES_DB: ${ZABBIX_DB_NAME}
+    volumes:
+      - zabbix_db_data:/var/lib/postgresql/data
+    networks:
+      - monitoring_net
+    restart: always
+
+  # --------------------
+  # ZABBIX SERVER
+  # --------------------
+  zabbix-server:
+    image: zabbix/zabbix-server-pgsql:latest
+    container_name: zabbix-server
+    environment:
+      DB_SERVER_HOST: zabbix-db
+      POSTGRES_USER: ${ZABBIX_DB_USER}
+      POSTGRES_PASSWORD: ${ZABBIX_DB_PASSWORD}
+      POSTGRES_DB: ${ZABBIX_DB_NAME}
+    depends_on:
+      - zabbix-db
+    networks:
+      - monitoring_net
+    restart: always
+
+  # --------------------
+  # ZABBIX WEB
+  # --------------------
+  zabbix-web:
+    image: zabbix/zabbix-web-nginx-pgsql:latest
+    container_name: zabbix-web
+    ports:
+      - "8080:8080"
+    environment:
+      DB_SERVER_HOST: zabbix-db
+      POSTGRES_USER: ${ZABBIX_DB_USER}
+      POSTGRES_PASSWORD: ${ZABBIX_DB_PASSWORD}
+      POSTGRES_DB: ${ZABBIX_DB_NAME}
+      ZBX_SERVER_HOST: zabbix-server
+    depends_on:
+      - zabbix-server
+    networks:
+      - monitoring_net
+    restart: always
+
+  # --------------------
+  # ZABBIX AGENT
+  # --------------------
+  zabbix-agent:
+    image: zabbix/zabbix-agent2:latest
+    container_name: zabbix-agent
+    hostname: zabbix-agent
+    privileged: true
+    pid: "host"
+    environment:
+      ZBX_SERVER_HOST: zabbix-server
+      ZBX_HOSTNAME: infra-devops-agent
+    networks:
+      - monitoring_net
+    restart: always
+
+  # --------------------
+  # CROWDSEC (IPS)
+  # --------------------
+  crowdsec:
+    image: crowdsecurity/crowdsec:latest
+    container_name: crowdsec
+    environment:
+      GID: "1000"
+      COLLECTIONS: "crowdsecurity/nginx crowdsecurity/linux crowdsecurity/sshd"
+    volumes:
+      - /var/log/nginx:/var/log/nginx:ro
+      - /var/log/auth.log:/var/log/auth.log:ro
+      - ./crowdsec/acquis.yaml:/etc/crowdsec/acquis.yaml
+      - crowdsec_data:/etc/crowdsec
+      - crowdsec_db:/var/lib/crowdsec/data
+    networks:
+      - monitoring_net
+    restart: always
+
+  # --------------------
+  # CROWDSEC BOUNCER NGINX
+  # --------------------
+  crowdsec-bouncer:
+    image: fbonalair/traefik-crowdsec-bouncer:latest
+    container_name: crowdsec-bouncer
+    environment:
+      CROWDSEC_BOUNCER_API_KEY: ${CROWDSEC_BOUNCER_API_KEY}
+      CROWDSEC_AGENT_HOST: crowdsec:8080
+    depends_on:
+      - crowdsec
+    networks:
+      - monitoring_net
+    restart: always
+
+  # --------------------
+  # METABASE (CrowdSec Dashboard)
+  # --------------------
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase
+    environment:
+      MB_DB_FILE: /metabase-data/metabase.db
+    ports:
+      - "3001:3000"
+    volumes:
+      - crowdsec_db:/var/lib/crowdsec/data:ro
+      - ./metabase-data:/metabase-data
+    depends_on:
+      - crowdsec
+    networks:
+      - monitoring_net
+    restart: always
+
+  # --------------------
+  # DOZZLE (Logs live)
+  # --------------------
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    environment:
+      DOZZLE_BASE: /logs
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - monitoring_net
+    restart: always
+
+  # --------------------
+  # PORTAINER (Containers management)
+  # --------------------
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - monitoring_net
+    restart: always
+
+  # --------------------
+  # VAULTWARDEN (Password Manager)
+  # --------------------
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    environment:
+      SIGNUPS_ALLOWED: "true"
+      WEBSOCKET_ENABLED: "true"
+      DOMAIN: "https://${SERVER_IP}/vaultwarden"
+      ADMIN_TOKEN: ${VAULTWARDEN_ADMIN_TOKEN}
+    volumes:
+      - vaultwarden_data:/data
+    networks:
+      - frontend_net
+    restart: always
+
+  # --------------------
+  # TTYD (Terminal Web)
+  # --------------------
+  ttyd:
+    image: tsl0922/ttyd:latest
+    container_name: ttyd
+    command: ttyd -b /terminal -W chroot /host bash
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /:/host
+    networks:
+      - monitoring_net
+    restart: always

@@ -1,0 +1,12 @@
+{
+  "docker": "active",
+  "ssh": "active",
+  "zabbix-agent": "active",
+  "zabbix-agent2": "inactiveinactive",
+  "cron": "inactiveinactive",
+  "rsyslog": "inactiveinactive",
+  "ufw": "inactiveinactive",
+  "apparmor": "active",
+  "networking": "inactiveinactive",
+  "systemd-journald": "active"
+}

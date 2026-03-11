@@ -1,0 +1,8 @@
+postgres:
+  image: postgres:15
+  environment:
+    POSTGRES_USER: admin
+    POSTGRES_PASSWORD: password
+    POSTGRES_DB: appdb
+  volumes:
+    - postgres_data:/var/lib/postgresql/data
