@@ -20,16 +20,24 @@ L’ensemble des services est orchestré via Docker Compose.
 
 ## Services déployés
 
-| Service | Description | Port |
-|--------|-------------|------|
-| Frontend | Interface web utilisateur | via Nginx |
-| Backend | API applicative | 3000 |
-| PostgreSQL | Base de données principale | interne |
-| Redis | Cache mémoire | interne |
-| Zabbix Web | Interface supervision | 8080 |
-| Zabbix Server | Collecte métriques | interne |
-| Zabbix Agent | Agent monitoring | interne |
-| Reverse Proxy (Nginx) | Point d’entrée unique | 8081 |
+| NOM CONTAINER      | PORTS            |
+|--------------------|------------------|
+| crowdsec           | -                |
+| reverse-proxy      | 80, 443          |
+| crowdsec-bouncer   | -                |
+| metabase           | 3001->3000       |
+| vaultwarden        | 80               |
+| ttyd               | 7681             |
+| postgres           | 5432             |
+| zabbix-agent       | 10050, 31999     |
+| zabbix-web         | 8080, 8443       |
+| backend            | 3000             |
+| zabbix-server      | 10051            |
+| redis              | 6379             |
+| portainer          | 9000, 9443       |
+| cadvisor           | 8082->8080       |
+| zabbix-db          | 5432             |
+| dozzle             | 8080             |
 
 ## Accès aux services
 - Site supervision :  
