@@ -8,20 +8,20 @@ L’ensemble des services est orchestré avec Docker Compose et s’appuie sur u
 
 L’infrastructure intègre plusieurs composants essentiels d’un environnement moderne :
 
-## Applications
+Applications
 
 - **Reverse Proxy Nginx** : point d’entrée unique pour les services web.
 - **Backend API** : service applicatif principal exposant les fonctionnalités métier.
 - **Vaultwarden** : gestionnaire de mots de passe auto-hébergé.
 - **Metabase** : outil de visualisation et d’analyse de données.
 
-## Bases de données et cache
+Bases de données et cache
 
 - **PostgreSQL** : base de données principale pour l’application.
 - **PostgreSQL (Zabbix)** : base de données dédiée à la supervision.
 - **Redis** : système de cache pour améliorer les performances des applications.
 
-## Supervision et observabilité
+Supervision et observabilité
 
 - **Zabbix Server** : collecte et analyse des métriques de l’infrastructure.
 - **Zabbix Web** : interface web de supervision.
@@ -29,12 +29,12 @@ L’infrastructure intègre plusieurs composants essentiels d’un environnement
 - **cAdvisor** : monitoring des conteneurs Docker (CPU, mémoire, réseau).
 - **Dozzle** : visualisation en temps réel des logs Docker.
 
-## Sécurité
+Sécurité
 
 - **CrowdSec** : moteur de détection d’attaques basé sur l’analyse des logs.
 - **CrowdSec Bouncer** : blocage automatique des IP malveillantes au niveau du reverse proxy.
 
-## Administration et gestion
+Administration et gestion
 
 - **Portainer** : interface web de gestion des conteneurs Docker.
 - **ttyd** : terminal web permettant l’accès à un shell depuis le navigateur.
