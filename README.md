@@ -9,10 +9,10 @@ Le but principal de cette infrastructure est de fournir une plateforme centralis
 L’ensemble des services est orchestré avec Docker Compose et s’appuie sur un reverse proxy Nginx permettant de centraliser l’accès aux différentes applications de supervision, d’administration et d’analyse.
 
 Cette infrastructure permet notamment de :
-- **surveiller les performances des serveurs et des conteneurs
-- **centraliser les logs et les métriques
-- **détecter les incidents ou anomalies
-- **sécuriser les services exposés
+- surveiller les performances des serveurs et des conteneurs
+- centraliser les logs et les métriques
+- détecter les incidents ou anomalies
+- sécuriser les services exposés
 
 L’infrastructure intègre plusieurs composants essentiels d’un environnement moderne :
 
