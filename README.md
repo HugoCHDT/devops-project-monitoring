@@ -32,6 +32,5 @@ L’ensemble des services est orchestré via Docker Compose.
 | Reverse Proxy (Nginx) | Point d’entrée unique | 8081 |
 
 ## Accès aux services
-
 - Site supervision :  
-[  http://IP_SERVEUR](http://20.111.59.13)
+http://20.111.59.13
