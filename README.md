@@ -2,9 +2,17 @@
 
 ## Présentation du projet
 
-Ce projet a pour objectif de déployer une infrastructure DevOps complète conteneurisée avec Docker afin de simuler un environnement de production réaliste.
+Ce projet a pour objectif de déployer une infrastructure DevOps complète conteneurisée avec Docker afin de simuler un environnement de production utilisé par l’équipe informatique d’une entreprise.
 
-L’ensemble des services est orchestré avec Docker Compose et s’appuie sur un reverse proxy Nginx permettant de centraliser les accès aux différentes applications.
+Le but principal de cette infrastructure est de fournir une plateforme centralisée de supervision et de monitoring permettant de surveiller l’état des services, des conteneurs et des ressources système.
+
+L’ensemble des services est orchestré avec Docker Compose et s’appuie sur un reverse proxy Nginx permettant de centraliser l’accès aux différentes applications de supervision, d’administration et d’analyse.
+
+Cette infrastructure permet notamment de :
+- **surveiller les performances des serveurs et des conteneurs
+- **centraliser les logs et les métriques
+- **détecter les incidents ou anomalies
+- **sécuriser les services exposés
 
 L’infrastructure intègre plusieurs composants essentiels d’un environnement moderne :
 
