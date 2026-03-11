@@ -14,7 +14,7 @@ Cette infrastructure permet notamment de :
 - détecter les incidents ou anomalies
 - sécuriser les services exposés
 
-L’infrastructure intègre plusieurs composants essentiels d’un environnement moderne :
+**L’infrastructure intègre plusieurs composants essentiels d’un environnement moderne :
 
 Applications
 
