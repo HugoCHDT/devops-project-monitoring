@@ -248,15 +248,11 @@ services:
     restart: always
 
   # --------------------
-  # TTYD (Terminal Web)
+  # IT-TOOLS
   # --------------------
-  ttyd:
-    image: tsl0922/ttyd:latest
-    container_name: ttyd
-    command: ttyd -b /terminal -W chroot /host bash
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /:/host
+  it-tools:
+    image: corentinth/it-tools:latest
+    container_name: it-tools
     networks:
-      - monitoring_net
+      - frontend_net
     restart: always
