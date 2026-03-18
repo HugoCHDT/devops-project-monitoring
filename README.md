@@ -49,7 +49,7 @@ Administration et gestion
 
 
 ## Architecture
-<img width="276" height="637" alt="image" src="https://github.com/user-attachments/assets/c19b0bec-1ce0-41b6-b30c-05ffb360fe52" />
+<img width="4393" height="2795" alt="image" src="https://github.com/user-attachments/assets/9781a0b3-fb7d-429d-88d6-1d464eaa0cbe" />
 
 ## Services déployés
 
