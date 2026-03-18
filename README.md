@@ -60,7 +60,6 @@ Administration et gestion
 | crowdsec-bouncer   | -                |
 | metabase           | 3001->3000       |
 | vaultwarden        | 80               |
-| ttyd               | 7681             |
 | postgres           | 5432             |
 | zabbix-agent       | 10050, 31999     |
 | zabbix-web         | 8080, 8443       |
@@ -71,6 +70,7 @@ Administration et gestion
 | cadvisor           | 8082->8080       |
 | zabbix-db          | 5432             |
 | dozzle             | 8080             |
+| it-tools           | 80               |
 
 ## Accès aux services
 - Site supervision :  
