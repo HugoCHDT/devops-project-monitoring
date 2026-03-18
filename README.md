@@ -45,7 +45,7 @@ Sécurité
 Administration et gestion
 
 - **Portainer** : interface web de gestion des conteneurs Docker.
-- **ttyd** : terminal web permettant l’accès à un shell depuis le navigateur.
+- **IT-tools** : boîte à outils réseau et dev (DNS, JSON, encodage, etc.).
 
 
 ## Architecture
